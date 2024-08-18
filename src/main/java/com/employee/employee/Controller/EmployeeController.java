@@ -1,64 +1,53 @@
 package com.employee.employee.Controller;
 
 import com.employee.employee.Service.EmployeeService;
-import com.employee.employee.model.Employee;
-import com.employee.employee.model.RetirementPlan;
+import com.employee.employee.dto.EmployeeResponseDto;
+import com.employee.employee.dto.RetirementPlanRequestDTO;
+import jakarta.validation.Valid;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @NoArgsConstructor
-@RequestMapping("/ipa/v1/employees")
+@RequestMapping("/api/v1/employees")
+@Validated
 public class EmployeeController {
     @Autowired
     private EmployeeService employeeService;
 
+
+
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<Employee> getAllEmployees(){
+    public List<EmployeeResponseDto> getAllEmployees(){
         return employeeService.getAllEmployees();
     }
 
     @GetMapping("/{employeeId}")
     @ResponseStatus(HttpStatus.OK)
-    public Employee getEmployeeById(@PathVariable Long employeeId){
-        return employeeService.getEmployeeById(employeeId);
+    public EmployeeResponseDto getEmployeeWithRetirementPlan(@PathVariable Long employeeId){
+        return employeeService.getEmployeeWithRetirementPlan(employeeId);
     }
 
-    @PostMapping
+    @GetMapping("/monthly-retirees")
+    @ResponseStatus(HttpStatus.OK)
+    public List<EmployeeResponseDto> getMonthlyUpcomingRetirees(){
+       return employeeService.getMonthlyUpcomingRetirees();
+    }
+
+    @PostMapping("/add-retirement-plan")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<String> addRetirementPlan(@RequestBody Map<String, Object> payload){
-        String firstName = (String) payload.get("firstName");
-        String lastName = (String) payload.get("lastName");
-        Double yearlySalary = (Double) payload.get("yearlySalary");
-
-        String referenceNumber = (String) payload.get("referenceNumber");
-        LocalDate enrollmentDate = LocalDate.parse((String) payload.get("enrollmentDate"));
-        LocalDate retirementDate = LocalDate.parse((String) payload.get("retirementDate"));
-        Double monthlyContribution = payload.get("monthlyContribution") != null ? (Double) payload.get("monthlyContribution") : null;
+    public void addRetirementPlan(@Valid @RequestBody RetirementPlanRequestDTO request){
+        System.out.println("Received DTO: " + request);
+      employeeService.addRetirementPlanForEmployee(request);
 
 
-        Employee employee = new Employee();
-        employee.setFirstName(firstName);
-        employee.setLastName(lastName);
-        employee.setYearlySalary(yearlySalary);
 
-        RetirementPlan retirementPlan = new RetirementPlan();
-        retirementPlan.setReferenceNumber(referenceNumber);
-        retirementPlan.setEnrollmentDate(enrollmentDate);
-        retirementPlan.setRetirementDate(retirementDate);
-        retirementPlan.setMonthlyContribution(monthlyContribution);
-
-        employeeService.addRetirementPlan(employee,retirementPlan);
-
-        return ResponseEntity.ok("Retirement plan added successfully");
     }
 
 }
